@@ -71,13 +71,14 @@ $mform = new enrol_attributes_edit_form(null, array(
 if ($mform->is_cancelled()) {
     redirect($return);
 }
-else if ($data = $mform->get_data()) {
+else if ($data = $mform->get_data()) { 
 
     if ($instance->id) {
         $instance->name = $data->name;
         $instance->roleid = $data->roleid;
         $instance->customint1 = isset($data->customint1) ? ($data->customint1) : 0;
         $instance->customtext1 = $data->customtext1;
+        $instance->customtext2 = $data->restrictions;
         $DB->update_record('enrol', $instance);
     }
     else {

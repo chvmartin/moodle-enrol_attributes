@@ -233,6 +233,8 @@ class enrol_attributes_plugin extends enrol_plugin {
                 }
                 $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
                         $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
+                //pridanie uzivatela do skupiny
+                groups_add_member(groups_get_group_by_name($enrol_attributes_record->customtext2), $user->id);
                 $nbenrolled++;
             }
         }

@@ -25,10 +25,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once $CFG->dirroot . '/enrol/attributes/locallib.php';
+require_once($CFG->dirroot . '/mod/timetable/locallib.php');
 
 class enrol_attributes_edit_form extends moodleform {
 
     function definition() {
+        global $DB, $CFG, $COURSE;
         $mform = $this->_form;
 
         list($instance, $plugin, $context) = $this->_customdata;
@@ -46,13 +48,25 @@ class enrol_attributes_edit_form extends moodleform {
         }
         $mform->addElement('select', 'roleid', get_string('role'), $roles);
         $mform->setDefault('roleid', $plugin->get_config('default_roleid'));
-
+        
+        //pridat 
+        $groupsall = (array) timetable_get_configdata('traininggroups');
+        //print_object($COURSE);
+        $groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
+        $optionsrestr = array(
+            'multiple' => false,
+            'noselectionstring' => get_string('selectgroup', 'timetable'));
+        $mform->addElement('autocomplete', 'restrictions', get_string('traininggroup', 'timetable'), (array) $groupsmenu, $optionsrestr);
+        $mform->setType('restrictions', PARAM_RAW);
+        $mform->addRule('restrictions', get_string('traininggroupnofilled', 'timetable'), 'required');
+        
+        //vypis podmienok
         $mform->addElement('textarea', 'customtext1', get_string('attrsyntax', 'enrol_attributes'), array(
                 'cols' => '60',
                 'rows' => '8'
         ));
         $mform->addHelpButton('customtext1', 'attrsyntax', 'enrol_attributes');
-
+        
         $whenexpiredoptions = [
                 ENROL_ATTRIBUTES_WHENEXPIREDDONOTHING => get_string('whenexpireddonothing', 'enrol_attributes'),
                 ENROL_ATTRIBUTES_WHENEXPIREDREMOVE => get_string('whenexpiredremove', 'enrol_attributes'),
@@ -94,6 +108,6 @@ class enrol_attributes_edit_form extends moodleform {
             $mform->closeHeaderBefore('buttonar');
         }
     }
-
+    
 }
 
