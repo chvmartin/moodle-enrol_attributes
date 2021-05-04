@@ -78,7 +78,8 @@ else if ($data = $mform->get_data()) {
         $instance->roleid = $data->roleid;
         $instance->customint1 = isset($data->customint1) ? ($data->customint1) : 0;
         $instance->customtext1 = $data->customtext1;
-        $instance->customtext2 = $data->restrictions;
+        $instance->customtext2 = $data->customtext2;
+        //print_object($data);die;
         $DB->update_record('enrol', $instance);
     }
     else {
@@ -86,7 +87,8 @@ else if ($data = $mform->get_data()) {
                 'name'        => $data->name,
                 'roleid'      => $data->roleid,
                 'customint1'  => isset($data->customint1),
-                'customtext1' => $data->customtext1
+                'customtext1' => $data->customtext1,
+                'customtext2' => $data->customtext2
         );
         $plugin->add_instance($course, $fields);
     }

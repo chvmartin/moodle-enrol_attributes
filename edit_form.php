@@ -50,16 +50,22 @@ class enrol_attributes_edit_form extends moodleform {
         $mform->setDefault('roleid', $plugin->get_config('default_roleid'));
         
         //pridat 
-        $groupsall = (array) timetable_get_configdata('traininggroups');
+        //$groupsall = (array) timetable_get_configdata('traininggroups');
         //print_object($COURSE);
-        $groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
+        //$groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
+
+        $groups = $DB->get_records('groups', array('courseid'=>$COURSE->id), 'name');
+        foreach($groups as $key => $group){
+            $groupsmenu[$key] = $group->name;
+            
+        }
         $optionsrestr = array(
             'multiple' => false,
             'noselectionstring' => get_string('selectgroup', 'timetable'));
-        $mform->addElement('autocomplete', 'restrictions', get_string('traininggroup', 'timetable'), (array) $groupsmenu, $optionsrestr);
-        $mform->setType('restrictions', PARAM_RAW);
-        $mform->addRule('restrictions', get_string('traininggroupnofilled', 'timetable'), 'required');
-        
+        $mform->addElement('autocomplete', 'customtext2', get_string('traininggroup', 'timetable'), (array) $groupsmenu, $optionsrestr);
+        $mform->setType('customtext2', PARAM_RAW);
+        //$mform->addRule('restrictions', get_string('traininggroupnofilled', 'timetable'), 'required');
+        //print_object($groupsmenu);
         //vypis podmienok
         $mform->addElement('textarea', 'customtext1', get_string('attrsyntax', 'enrol_attributes'), array(
                 'cols' => '60',
