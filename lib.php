@@ -226,6 +226,11 @@ class enrol_attributes_plugin extends enrol_plugin {
                 $nbdbqueries++;
                 $cache->set($dbquerycachekey, serialize($users));
             }
+            
+            $groupsall = (array) timetable_get_configdata('traininggroups');
+            //print_object($COURSE);
+            $groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
+            
             foreach ($users as $user) {
                 $recovergrades = null;
                 if (is_enrolled(context_course::instance($enrol_attributes_record->courseid), $user)) {
@@ -233,8 +238,16 @@ class enrol_attributes_plugin extends enrol_plugin {
                 }
                 $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
                         $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
+                //je uzivatel uz zaradeny do nejakej skupiny ?
+                //
+                foreach($groupsmenu as $key => $value){
+                    groups_remove_member($grouporid, $userorid);
+                }
+                
                 //pridanie uzivatela do skupiny
-                groups_add_member(groups_get_group_by_name($enrol_attributes_record->customtext2), $user->id);
+                groups_add_member($enrol_attributes_record->customtext2, $user->id); 
+                //print_object($enrol_attributes_record);
+                //groups_add_member($enrol_attributes_record->customtext2, $user->id);
                 $nbenrolled++;
             }
         }
@@ -338,6 +351,7 @@ class enrol_attributes_plugin extends enrol_plugin {
         if (!$DB->delete_records('user_enrolments', array('enrolid' => $instanceid))) {
             return false;
         }
+        groups_remove_member($grouporid, $userorid);
         $context->mark_dirty();
 
         return true;

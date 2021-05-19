@@ -43,7 +43,7 @@ if (!$courseid || !$instanceid) {
 }
 
 $nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid);
-print_object($nbenrolled);die;
+//print_object($nbenrolled);die;
 ob_end_clean();
 
 if ($nbenrolled !== false) {
