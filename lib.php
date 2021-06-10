@@ -227,9 +227,9 @@ class enrol_attributes_plugin extends enrol_plugin {
                 $cache->set($dbquerycachekey, serialize($users));
             }
             
-            $groupsall = (array) timetable_get_configdata('traininggroups');
+            //$groupsall = (array) timetable_get_configdata('traininggroups');
             //print_object($COURSE);
-            $groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
+            //$groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
             
             foreach ($users as $user) {
                 $recovergrades = null;
@@ -240,11 +240,12 @@ class enrol_attributes_plugin extends enrol_plugin {
                         $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
                 //je uzivatel uz zaradeny do nejakej skupiny ?
                 //
-                foreach($groupsmenu as $key => $value){
-                    groups_remove_member($grouporid, $userorid);
-                }
-                
+                //foreach($groupsmenu as $key => $value){
+                //    groups_remove_member($grouporid, $userorid);
+                //}
+                $userroles = get_user_roles($user->id);
                 //pridanie uzivatela do skupiny
+                
                 groups_add_member($enrol_attributes_record->customtext2, $user->id); 
                 //print_object($enrol_attributes_record);
                 //groups_add_member($enrol_attributes_record->customtext2, $user->id);
