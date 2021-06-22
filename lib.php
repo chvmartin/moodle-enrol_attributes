@@ -23,6 +23,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 require_once $CFG->dirroot . '/enrol/attributes/locallib.php';
+require_once($CFG->dirroot . '/group/lib.php');
 
 /**
  * Database enrolment plugin implementation.
@@ -231,6 +232,10 @@ class enrol_attributes_plugin extends enrol_plugin {
             //print_object($COURSE);
             //$groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
             
+            $params = array('enrol' => 'attributes', 'courseid'  => $enrol_attributes_record->courseid, 'status' => 0);
+            $sql="SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status";
+            $course_enrol_attributes_records = $DB->get_records_sql($sql, $params);
+
             foreach ($users as $user) {
                 $recovergrades = null;
                 if (is_enrolled(context_course::instance($enrol_attributes_record->courseid), $user)) {
@@ -238,12 +243,15 @@ class enrol_attributes_plugin extends enrol_plugin {
                 }
                 $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
                         $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
-                //je uzivatel uz zaradeny do nejakej skupiny ?
-                //
-                //foreach($groupsmenu as $key => $value){
-                //    groups_remove_member($grouporid, $userorid);
-                //}
-                $userroles = get_user_roles($user->id);
+
+                foreach($course_enrol_attributes_records as $key => $course_attributes){
+                    // Check if the user a participant of the group.
+                    
+                    if(groups_is_member($key, $user->id) && ($enrol_attributes_record->customtext2 != $key)){
+                        groups_remove_member($key, $user->id);
+                    }
+                }
+                
                 //pridanie uzivatela do skupiny
                 
                 groups_add_member($enrol_attributes_record->customtext2, $user->id); 
