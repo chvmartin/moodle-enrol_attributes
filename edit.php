@@ -78,7 +78,8 @@ else if ($data = $mform->get_data()) {
         $instance->roleid = $data->roleid;
         $instance->customint1 = isset($data->customint1) ? ($data->customint1) : 0;
         $instance->customtext1 = $data->customtext1;
-        $instance->customtext2 = $data->customtext2;
+        $instance->customtext2 = isset($data->customtext2) ? $data->customtext2 : null;
+        $instance->customtext3 = isset($data->customtext3) ? $data->customtext3 : null;
         //print_object($data);die;
         $DB->update_record('enrol', $instance);
     }
@@ -88,7 +89,8 @@ else if ($data = $mform->get_data()) {
                 'roleid'      => $data->roleid,
                 'customint1'  => isset($data->customint1),
                 'customtext1' => $data->customtext1,
-                'customtext2' => $data->customtext2
+                'customtext2' => $data->customtext2,
+                'customtext3' => $data->customtext3
         );
         $plugin->add_instance($course, $fields);
     }
@@ -119,8 +121,8 @@ if ($instanceid) {
     $debug_sqlquery =
             'SELECT DISTINCT u.id FROM {user} u ' . $debug_arraysql['select'] . ' WHERE ' . $debug_arraysql['where'];
     debugging('sqlquery= ' . print_r($debug_sqlquery, true), DEBUG_DEVELOPER);
-    $debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
-    debugging('countusers= ' . print_r(count($debug_users), true), DEBUG_DEVELOPER);
+    //$debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
+    //debugging('countusers= ' . print_r(count($debug_users), true), DEBUG_DEVELOPER);
     //debugging('force.php DEBUGGING:', DEBUG_DEVELOPER);
     //$nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid);
     //debugging('nbenrolled= ' . print_r($nbenrolled, true), DEBUG_DEVELOPER);

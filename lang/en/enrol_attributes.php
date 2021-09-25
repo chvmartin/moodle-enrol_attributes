@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['uniqueenrol'] = 'Unique enrolment';
 $string['pluginname'] = 'Enrol by user profile fields';
 $string['defaultrole'] = 'Default role';
 $string['defaultrole_desc'] = 'Default role used to enrol people with this plugin (each instance can override this).';

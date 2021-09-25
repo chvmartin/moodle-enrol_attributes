@@ -64,9 +64,8 @@ class enrol_attributes_edit_form extends moodleform {
             'noselectionstring' => get_string('selectgroup', 'timetable'));
         $mform->addElement('autocomplete', 'customtext2', get_string('traininggroup', 'timetable'), (array) $groupsmenu, $optionsrestr);
         $mform->setType('customtext2', PARAM_RAW);
-        //$mform->addRule('restrictions', get_string('traininggroupnofilled', 'timetable'), 'required');
-        //print_object($groupsmenu);
-        //vypis podmienok
+        $mform->addElement('checkbox', 'customtext3', get_string('uniqueenrol', 'enrol_attributes'));
+
         $mform->addElement('textarea', 'customtext1', get_string('attrsyntax', 'enrol_attributes'), array(
                 'cols' => '60',
                 'rows' => '8'
