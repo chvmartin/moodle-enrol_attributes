@@ -124,7 +124,7 @@ if ($instanceid) {
     //$debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
     //debugging('countusers= ' . print_r(count($debug_users), true), DEBUG_DEVELOPER);
     //debugging('force.php DEBUGGING:', DEBUG_DEVELOPER);
-	$nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid);
+	//$nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid); test uprav
     //debugging('nbenrolled= ' . print_r($nbenrolled, true), DEBUG_DEVELOPER);
 }
 // DEBUGGING : END
