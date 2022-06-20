@@ -143,7 +143,7 @@ class enrol_attributes_plugin extends enrol_plugin {
             $userid = $user_enrolment->userid;
 
             $select = 'SELECT DISTINCT u.id FROM {user} u';
-            $where = ' WHERE u.id=' . $userid . ' AND u.deleted=0 AND ';
+            $where = ' WHERE u.id=' . $userid . ' AND u.deleted=0 AND u.suspended=0 AND ';
             $arraysyntax = self::attrsyntax_toarray($unenrol_attributes_record->customtext1);
             $arraysql = self::arraysyntax_tosql($arraysyntax);
             $dbquerycachekey = md5($select . serialize($arraysql) . $where);
@@ -205,7 +205,7 @@ class enrol_attributes_plugin extends enrol_plugin {
             } else { // called by scheduled task or by construct
                 $where = ' WHERE 1=1';
             }
-            $where .= ' AND u.deleted=0 AND ';
+            $where .= ' AND u.deleted=0 AND u.suspended=0 AND ';
             $arraysyntax = self::attrsyntax_toarray($enrol_attributes_record->customtext1);
             $arraysql = self::arraysyntax_tosql($arraysyntax);
             $dbquerycachekey = md5($select . serialize($arraysql) . $where);
@@ -219,46 +219,45 @@ class enrol_attributes_plugin extends enrol_plugin {
                         $arraysql['params']);
                 $nbdbqueries++;
                 //print_object($select . $arraysql['select'] . $where . $arraysql['where']);
-                //print_object($arraysql);
+                //print_object($arraysql['params']);
                 $cache->set($dbquerycachekey, serialize($users));
             }
-
-            //$groupsall = (array) timetable_get_configdata('traininggroups');
-            //print_object($COURSE);
-            //$groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
 
             $params = array('enrol' => 'attributes', 'courseid' => $enrol_attributes_record->courseid, 'status' => 0, 'customtext3' => 1);
             $sql = "SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status and customtext3=:customtext3";
             $course_enrol_attributes_unique = $DB->get_records_sql($sql, $params);
             
             foreach ($users as $user) {
-                $recovergrades = null;
-                if (is_enrolled(context_course::instance($enrol_attributes_record->courseid), $user)) {
-                    $recovergrades = false; // do not try to recover grades if user is already enrolled
-                }
-                $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
-                        $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
+				if(isset($user->id)){
+	                $recovergrades = null;
+	                if (is_enrolled(context_course::instance($enrol_attributes_record->courseid), $user)) {
+	                    $recovergrades = false; // do not try to recover grades if user is already enrolled
+	                }
 
-                if (isset($enrol_attributes_record->customtext2)) {
-                    $usergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
+	                $enrol_attributes_instance->enrol_user($enrol_attributes_record, $user->id,
+	                        $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
 
-                    //foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
-                    if ($enrol_attributes_record->customtext3 == 1) {
-                        foreach ($usergroups as $usergroupid => $usergroup) {
+	                if (isset($enrol_attributes_record->customtext2)) {
+	                    $usergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
 
-                            //foreach ($usergroups as $usergroupid => $usergroup) {
-                            foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
-                                if (($uniqueid != $enrol_attributes_record->customtext2) && $uniqueid == $usergroupid) {
+	                    //foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
+	                    if ($enrol_attributes_record->customtext3 == 1) {
+	                        foreach ($usergroups as $usergroupid => $usergroup) {
 
-                                    groups_remove_member($usergroupid, $user->id);
-                                }
-                            }
-                        }
-                    }
-                    groups_add_member($enrol_attributes_record->customtext2, $user->id);
-                }
+	                            //foreach ($usergroups as $usergroupid => $usergroup) {
+	                            foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
+	                                if (($uniqueid != $enrol_attributes_record->customtext2) && $uniqueid == $usergroupid) {
 
-                $nbenrolled++;
+	                                    groups_remove_member($usergroupid, $user->id);
+	                                }
+	                            }
+	                        }
+	                    }
+	                    groups_add_member($enrol_attributes_record->customtext2, $user->id);
+	                }
+
+	                $nbenrolled++;
+				}
             }
         }
 
@@ -327,17 +326,29 @@ class enrol_attributes_plugin extends enrol_plugin {
                     $join_id++;
                     $data = 'd' . $join_id . '.data';
                     $select .= ' RIGHT JOIN {user_info_data} d' . $join_id . ' ON d' . $join_id . '.userid = u.id AND d' . $join_id . '.fieldid = ' . $customkey;
-                    $where .= ' (' . $DB->sql_compare_text($data) . ' = ' . $DB->sql_compare_text('?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
-                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
-                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), '?') . ')';
-                    if (strpos($rule->value, '[LIKE]') > -1) {
-                        $rule->value = str_replace('[LIKE]', '', $rule->value);
-                        array_push($params, $rule->value, '%;' . $rule->value, $rule->value . ';%',
-                                '%' . $rule->value . '%');
-                    } else {
-                        array_push($params, $rule->value, '%;' . $rule->value, $rule->value . ';%',
-                                '%;' . $rule->value . ';%');
-                    }
+					if(strpos($rule->value, '[NOTEMPTY]') > -1){
+						$where .= ' (' . $DB->sql_compare_text($data) . ' != ' . $DB->sql_compare_text("''") . ')';
+					}elseif(strpos($rule->value, '[GREATERTHAN]') > -1){
+						$where .= ' (' . $DB->sql_compare_text($data) . ' > ' . $DB->sql_compare_text('?') . ')';
+						$rule->value = str_replace('[GREATERTHAN]', '', $rule->value);
+						array_push($params, $rule->value);
+					}elseif(strpos($rule->value, '[LESSTHAN]') > -1){
+						$where .= ' (' . $DB->sql_compare_text($data) . ' < ' . $DB->sql_compare_text('?') . ')';
+						$rule->value = str_replace('[LESSTHAN]', '', $rule->value);
+						array_push($params, $rule->value);
+					} else{
+	                    $where .= ' (' . $DB->sql_compare_text($data) . ' = ' . $DB->sql_compare_text('?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
+	                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data),
+	                                    '?') . ' OR ' . $DB->sql_like($DB->sql_compare_text($data), '?') . ')';
+	                    if (strpos($rule->value, '[LIKE]') > -1) {
+	                        $rule->value = str_replace('[LIKE]', '', $rule->value);
+	                        array_push($params, $rule->value, '%;' . $rule->value, $rule->value . ';%',
+	                                '%' . $rule->value . '%');
+	                    }  else {
+	                        array_push($params, $rule->value, '%;' . $rule->value, $rule->value . ';%',
+	                                '%;' . $rule->value . ';%');
+	                    }
+					}
                 }
             }
         }
