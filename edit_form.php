@@ -25,15 +25,15 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once $CFG->dirroot . '/enrol/attributes/locallib.php';
-require_once($CFG->dirroot . '/mod/timetable/locallib.php');
 
 class enrol_attributes_edit_form extends moodleform {
 
     function definition() {
-        global $DB, $CFG, $COURSE;
+        global $DB;
         $mform = $this->_form;
 
-        list($instance, $plugin, $context) = $this->_customdata;
+
+        [$instance, $plugin, $context] = $this->_customdata;
 
         $mform->addElement('header', 'header', get_string('pluginname', 'enrol_attributes'));
 
@@ -48,30 +48,39 @@ class enrol_attributes_edit_form extends moodleform {
         }
         $mform->addElement('select', 'roleid', get_string('role'), $roles);
         $mform->setDefault('roleid', $plugin->get_config('default_roleid'));
-        
-        //pridat 
-        //$groupsall = (array) timetable_get_configdata('traininggroups');
-        //print_object($COURSE);
-        //$groupsmenu = $groupsall[date('Y', $COURSE->startdate)];
 
-        $groups = $DB->get_records('groups', array('courseid'=>$COURSE->id), 'name');
-        foreach($groups as $key => $group){
-            $groupsmenu[$key] = $group->name;
-            
+        // Start modification
+        $courseid = required_param('courseid', PARAM_INT);
+        $groups = groups_get_all_groups($courseid);
+
+        if (count($groups)) {
+            $groups2 = array();
+            foreach ($groups as $value) {
+                $groups2[$value->id] = $value->name;
+            }
+
+            $groupselector = $mform->addElement('autocomplete', 'groupselect', get_string('group', 'enrol_attributes'),
+                    $groups2);
+            $groupselector->setMultiple(true);
+            $mform->addHelpButton('groupselect', 'group', 'enrol_attributes');
+
+            $recordgroups =
+                    (property_exists($instance, 'customtext1') && property_exists(json_decode($instance->customtext1), 'groups')) ? json_decode($instance->customtext1)->groups : [];
+            $recordgroups === [] ?: $groupselector->setSelected($recordgroups);
         }
-        $optionsrestr = array(
-            'multiple' => false,
-            'noselectionstring' => get_string('selectgroup', 'timetable'));
-        $mform->addElement('autocomplete', 'customtext2', get_string('traininggroup', 'timetable'), (array) $groupsmenu, $optionsrestr);
-        $mform->setType('customtext2', PARAM_RAW);
-        $mform->addElement('checkbox', 'customtext3', get_string('uniqueenrol', 'enrol_attributes'));
+        else {
+            $groupselector = $mform->addElement('static', 'groupselect', get_string('group', 'enrol_attributes'), html_writer::div(get_string('nogroups', 'group'), 'alert alert-info'));
+            $mform->addHelpButton('groupselect', 'group', 'enrol_attributes');
+        }
 
+
+        // End modification
         $mform->addElement('textarea', 'customtext1', get_string('attrsyntax', 'enrol_attributes'), array(
                 'cols' => '60',
                 'rows' => '8'
         ));
         $mform->addHelpButton('customtext1', 'attrsyntax', 'enrol_attributes');
-        
+
         $whenexpiredoptions = [
                 ENROL_ATTRIBUTES_WHENEXPIREDDONOTHING => get_string('whenexpireddonothing', 'enrol_attributes'),
                 ENROL_ATTRIBUTES_WHENEXPIREDREMOVE => get_string('whenexpiredremove', 'enrol_attributes'),
@@ -113,6 +122,6 @@ class enrol_attributes_edit_form extends moodleform {
             $mform->closeHeaderBefore('buttonar');
         }
     }
-    
+
 }
 

@@ -44,6 +44,12 @@ if (!enrol_is_enabled('attributes')) {
     redirect($return);
 }
 
+/* No custom field defined */
+if(!$DB->get_records('user_info_field')){
+    \core\notification::warning(get_string('no_custom_field', 'enrol_attributes',$CFG->wwwroot . '/user/profile/index.php'));
+}
+
+
 $plugin = enrol_get_plugin('attributes');
 
 if ($instanceid) {
@@ -71,31 +77,41 @@ $mform = new enrol_attributes_edit_form(null, array(
 if ($mform->is_cancelled()) {
     redirect($return);
 }
-else if ($data = $mform->get_data()) { 
+elseif ($data = $mform->get_data()) {
 
     if ($instance->id) {
         $instance->name = $data->name;
         $instance->roleid = $data->roleid;
         $instance->customint1 = isset($data->customint1) ? ($data->customint1) : 0;
-        $instance->customtext1 = $data->customtext1;
-        $instance->customtext2 = isset($data->customtext2) ? $data->customtext2 : null;
-        $instance->customtext3 = isset($data->customtext3) ? $data->customtext3 : null;
-        //print_object($data);die;
+        $instance->customtext1 = getRulesWithGroups($data);
         $DB->update_record('enrol', $instance);
+        // Start modification
+
+        // End modification
     }
     else {
         $fields = array(
                 'name'        => $data->name,
                 'roleid'      => $data->roleid,
                 'customint1'  => isset($data->customint1),
-                'customtext1' => $data->customtext1,
-                'customtext2' => $data->customtext2,
-                'customtext3' => $data->customtext3
+                'customtext1' => getRulesWithGroups($data)
         );
-        $plugin->add_instance($course, $fields);
+        $id = $plugin->add_instance($course, $fields);
     }
 
     redirect($return);
+}
+
+/**
+ * Adds groups to the rules object
+ * @param $data
+ * @return false|string
+ * @throws \JsonException
+ */
+function getRulesWithGroups($data){
+    $rules = json_decode($data->customtext1, true, 512, JSON_THROW_ON_ERROR);
+    $rules['groups'] = $data->groupselect;
+    return json_encode($rules, JSON_THROW_ON_ERROR);
 }
 
 $PAGE->set_heading($course->fullname);
@@ -113,19 +129,19 @@ $mform->display();
 
 // DEBUGGING : BEGIN
 if ($instanceid) {
-    //debugging('customtext1= ' . print_r(json_decode($instance->customtext1), true), DEBUG_DEVELOPER);
-    //$debug_fieldsandrules = enrol_attributes_plugin::attrsyntax_toarray($instance->customtext1);
-    //debugging('fieldsandrules= ' . print_r($debug_fieldsandrules, true), DEBUG_DEVELOPER);
-    //$debug_arraysql = enrol_attributes_plugin::arraysyntax_tosql($debug_fieldsandrules);
-    //debugging('arraysql= ' . print_r($debug_arraysql, true), DEBUG_DEVELOPER);
-    //$debug_sqlquery =
-    //        'SELECT DISTINCT u.id FROM {user} u ' . $debug_arraysql['select'] . ' WHERE ' . $debug_arraysql['where'];
-    //debugging('sqlquery= ' . print_r($debug_sqlquery, true), DEBUG_DEVELOPER);
-    //$debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
-    //debugging('countusers= ' . print_r(count($debug_users), true), DEBUG_DEVELOPER);
-    //debugging('force.php DEBUGGING:', DEBUG_DEVELOPER);
-	//$nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid); test uprav
-    //debugging('nbenrolled= ' . print_r($nbenrolled, true), DEBUG_DEVELOPER);
+    debugging('customtext1= ' . print_r(json_decode($instance->customtext1), true), DEBUG_DEVELOPER);
+    $debug_fieldsandrules = enrol_attributes_plugin::attrsyntax_toarray($instance->customtext1);
+    debugging('fieldsandrules= ' . print_r($debug_fieldsandrules, true), DEBUG_DEVELOPER);
+    $debug_arraysql = enrol_attributes_plugin::arraysyntax_tosql($debug_fieldsandrules);
+    debugging('arraysql= ' . print_r($debug_arraysql, true), DEBUG_DEVELOPER);
+    $debug_sqlquery =
+            'SELECT DISTINCT u.id FROM {user} u ' . $debug_arraysql['select'] . ' WHERE ' . $debug_arraysql['where'];
+    debugging('sqlquery= ' . print_r($debug_sqlquery, true), DEBUG_DEVELOPER);
+    $debug_users = $DB->get_records_sql($debug_sqlquery, $debug_arraysql['params']);
+    debugging('countusers= ' . print_r(count($debug_users), true), DEBUG_DEVELOPER);
+    //    debugging('force.php DEBUGGING:', DEBUG_DEVELOPER);
+    //    $nbenrolled = enrol_attributes_plugin::process_enrolments(null, $instanceid);
+    //    debugging('nbenrolled= ' . print_r($nbenrolled, true), DEBUG_DEVELOPER);
 }
 // DEBUGGING : END
 
