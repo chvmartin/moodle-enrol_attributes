@@ -61,7 +61,7 @@ class enrol_attributes_edit_form extends moodleform {
 
             $groupselector = $mform->addElement('autocomplete', 'groupselect', get_string('group', 'enrol_attributes'),
                     $groups2);
-            $groupselector->setMultiple(true);
+            $groupselector->setMultiple(false);
             $mform->addHelpButton('groupselect', 'group', 'enrol_attributes');
 
             $recordgroups =
@@ -72,6 +72,8 @@ class enrol_attributes_edit_form extends moodleform {
             $groupselector = $mform->addElement('static', 'groupselect', get_string('group', 'enrol_attributes'), html_writer::div(get_string('nogroups', 'group'), 'alert alert-info'));
             $mform->addHelpButton('groupselect', 'group', 'enrol_attributes');
         }
+
+	    $mform->addElement('checkbox', 'customtext3', get_string('uniqueenrol', 'enrol_attributes'));
 
 
         // End modification

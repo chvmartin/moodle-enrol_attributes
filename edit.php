@@ -84,6 +84,8 @@ elseif ($data = $mform->get_data()) {
         $instance->roleid = $data->roleid;
         $instance->customint1 = isset($data->customint1) ? ($data->customint1) : 0;
         $instance->customtext1 = getRulesWithGroups($data);
+	    $instance->customtext2 = $data->groupselect ?? null;
+	    $instance->customtext3 = isset($data->customtext3) ? $data->customtext3 : null;
         $DB->update_record('enrol', $instance);
         // Start modification
 
@@ -94,7 +96,9 @@ elseif ($data = $mform->get_data()) {
                 'name'        => $data->name,
                 'roleid'      => $data->roleid,
                 'customint1'  => isset($data->customint1),
-                'customtext1' => getRulesWithGroups($data)
+                'customtext1' => getRulesWithGroups($data),
+                'customtext2' => $data->groupselect ?? null,
+                'customtext3' => $data->customtext3
         );
         $id = $plugin->add_instance($course, $fields);
     }

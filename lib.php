@@ -241,38 +241,16 @@ class enrol_attributes_plugin extends enrol_plugin {
                 $nbenrolled++;
                 // Start modification
 
-                $groups = json_decode($enrol_attributes_record->customtext1, true)['groups'] ?? [];
-	            $usergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
-                foreach ($groups as $groupid) {
-
-	                $params = array('enrol' => 'attributes', 'courseid' => $enrol_attributes_record->courseid, 'status' => 0, 'customtext3' => 1);
-	                $sql = "SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status and customtext3=:customtext3";
-	                $course_enrol_attributes_unique = $DB->get_records_sql($sql, $params);
-
-	                if ($enrol_attributes_record->customtext3 == 1) {
-		                foreach ($usergroups as $usergroupid => $usergroup) {
-
-			                //foreach ($usergroups as $usergroupid => $usergroup) {
-			                foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
-				                if (($uniqueid != $enrol_attributes_record->customtext2) && $uniqueid == $usergroupid) {
-
-					                groups_remove_member($usergroupid, $user->id);
-				                }
-			                }
-		                }
-	                }
-
-                    groups_add_member($groupid, $user->id);
-                }
-
-	            if (isset($enrol_attributes_record->customtext2)) {
+	            if($groupid = json_decode($enrol_attributes_record->customtext1, true)['groups'] ?? false){
 		            $usergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
 
-		            //foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
+		            $params = array('enrol' => 'attributes', 'courseid' => $enrol_attributes_record->courseid, 'status' => 0, 'customtext3' => 1);
+		            $sql = "SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status and customtext3=:customtext3";
+		            $course_enrol_attributes_unique = $DB->get_records_sql($sql, $params);
+
 		            if ($enrol_attributes_record->customtext3 == 1) {
 			            foreach ($usergroups as $usergroupid => $usergroup) {
 
-				            //foreach ($usergroups as $usergroupid => $usergroup) {
 				            foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
 					            if (($uniqueid != $enrol_attributes_record->customtext2) && $uniqueid == $usergroupid) {
 
@@ -281,8 +259,11 @@ class enrol_attributes_plugin extends enrol_plugin {
 				            }
 			            }
 		            }
-		            groups_add_member($enrol_attributes_record->customtext2, $user->id);
+
+		            groups_add_member($groupid, $user->id);
 	            }
+
+
 
                 // End modification
             }
