@@ -215,7 +215,7 @@ class enrol_attributes_plugin extends enrol_plugin {
             else { // called by scheduled task or by construct
                 $where = ' WHERE 1=1';
             }
-            $where .= ' AND u.deleted=0 AND ';
+            $where .= ' AND u.deleted=0 AND u.suspended=0 AND ';
             $arraysyntax = self::attrsyntax_toarray($enrol_attributes_record->customtext1);
             $arraysql = self::arraysyntax_tosql($arraysyntax);
             $dbquerycachekey = md5($select . serialize($arraysql) . $where);
@@ -240,27 +240,32 @@ class enrol_attributes_plugin extends enrol_plugin {
                         $enrol_attributes_record->roleid, 0, 0, ENROL_USER_ACTIVE, $recovergrades);
                 $nbenrolled++;
                 // Start modification
+	            $newgroup = $enrol_attributes_record->customtext2;
 
-	            if($groupid = json_decode($enrol_attributes_record->customtext1, true)['groups'] ?? false){
-		            $usergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
-
-		            $params = array('enrol' => 'attributes', 'courseid' => $enrol_attributes_record->courseid, 'status' => 0, 'customtext3' => 1);
-		            $sql = "SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status and customtext3=:customtext3";
-		            $course_enrol_attributes_unique = $DB->get_records_sql($sql, $params);
+	            if(!empty($newgroup)){
 
 		            if ($enrol_attributes_record->customtext3 == 1) {
-			            foreach ($usergroups as $usergroupid => $usergroup) {
 
-				            foreach ($course_enrol_attributes_unique as $uniqueid => $usergroupunique) {
-					            if (($uniqueid != $enrol_attributes_record->customtext2) && $uniqueid == $usergroupid) {
+			            $oldusergroups = groups_get_all_groups($enrol_attributes_record->courseid, $user->id, 0, 'g.id, g.name');
 
-						            groups_remove_member($usergroupid, $user->id);
+			            $params = array('courseid' => $enrol_attributes_record->courseid, 'status' => 0, 'customtext3' => 1);
+			            $sql = "SELECT DISTINCT customtext2 FROM {enrol} WHERE enrol='attributes' AND courseid=:courseid and status=:status and customtext3=:customtext3";
+			            $uniquegroups = $DB->get_records_sql($sql, $params);
+
+						//vsetky skupiny v ktorych je uzivatel prihlaseny
+			            foreach ($oldusergroups as $oldusergroupid => $oldusergroup) {
+
+							//vsetky unikatne skupiny
+				            foreach ($uniquegroups as $uniquegroupid => $usergroupunique) {
+					            if (($uniquegroupid != $newgroup) && $uniquegroupid == $oldusergroupid) {
+
+						            groups_remove_member($oldusergroupid, $user->id);
 					            }
 				            }
 			            }
 		            }
 
-		            groups_add_member($groupid, $user->id);
+		            groups_add_member($newgroup, $user->id);
 	            }
 
 
